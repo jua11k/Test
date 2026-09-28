@@ -130,5 +130,43 @@ CREATE INDEX idx_patients_tenant_client ON "patients"("tenant_id", "client_id");
 CREATE INDEX idx_appointments_tenant_date ON "appointments"("tenant_id", "date");
 
 -- Insertar Data Mínima de Arranque
-INSERT INTO "tenants" ("id", "slug", "name", "commercial_name") VALUES ('00000000-0000-0000-0000-000000000001', 'vet-principal', 'Veterinaria Manila', 'Manila Vet');
-INSERT INTO "users" ("tenant_id", "email", "role") VALUES ('00000000-0000-0000-0000-000000000001', 'admin@manila.com', 'clinical_staff');
+INSERT INTO "tenants" ("id", "slug", "name", "commercial_name") VALUES ('00000000-0000-0000-0000-000000000001', 'vet-principal', 'Veterinaria Manila', 'Manila Vet') ON CONFLICT DO NOTHING;
+INSERT INTO "users" ("tenant_id", "email", "role") VALUES ('00000000-0000-0000-0000-000000000001', 'admin@manila.com', 'clinical_staff') ON CONFLICT DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS "Veterinaria"."clinical_notes" (
+	"id" uuid PRIMARY KEY DEFAULT uuid_generate_v4() NOT NULL,
+	"tenant_id" uuid NOT NULL,
+	"patient_id" uuid NOT NULL,
+	"veterinarian_id" uuid NOT NULL,
+	"title" text NOT NULL,
+	"type" text NOT NULL,
+	"narrative" text NOT NULL,
+	"plan" text,
+	"temp" text,
+	"heart_rate" text,
+	"resp_rate" text,
+	"weight" text,
+	"tags" text[],
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"deleted_at" timestamp
+);
+
+DO $$ BEGIN
+ ALTER TABLE "Veterinaria"."clinical_notes" ADD CONSTRAINT "clinical_notes_tenant_id_tenants_id_fk" FOREIGN KEY ("tenant_id") REFERENCES "Veterinaria"."tenants"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "Veterinaria"."clinical_notes" ADD CONSTRAINT "clinical_notes_patient_id_patients_id_fk" FOREIGN KEY ("patient_id") REFERENCES "Veterinaria"."patients"("id") ON DELETE cascade ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+ ALTER TABLE "Veterinaria"."clinical_notes" ADD CONSTRAINT "clinical_notes_veterinarian_id_veterinarians_id_fk" FOREIGN KEY ("veterinarian_id") REFERENCES "Veterinaria"."veterinarians"("id") ON DELETE restrict ON UPDATE no action;
+EXCEPTION
+ WHEN duplicate_object THEN null;
+END $$;
+
+CREATE INDEX IF NOT EXISTS idx_clinical_notes_tenant_patient ON "Veterinaria"."clinical_notes"("tenant_id", "patient_id");

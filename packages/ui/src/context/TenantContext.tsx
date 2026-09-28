@@ -321,14 +321,44 @@ export const TenantProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     showToast('Estado del paciente actualizado', 'sync');
   };
 
-  const addClinicalNote = (noteData: Omit<ClinicalNote, 'id'>) => {
-    const newNote: ClinicalNote = {
-      ...noteData,
-      id: `note-${Date.now()}`,
-    };
-    setClinicalNotes((prev) => [newNote, ...prev]);
-    showToast('Nota clínica agregada al expediente', 'clinical_notes');
+  const fetchClinicalNotes = async (patientId: string) => {
+    try {
+      const response = await fetch(`/api/clinical-notes?patientId=${patientId}`);
+      const data = await response.json();
+      if (data.success) {
+        setClinicalNotes(data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching clinical notes:', error);
+    }
   };
+
+  const addClinicalNote = async (noteData: Omit<ClinicalNote, 'id'>) => {
+    try {
+      const response = await fetch('/api/clinical-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(noteData),
+      });
+      const data = await response.json();
+      if (data.success) {
+        // Refrescar notas si es exitoso
+        await fetchClinicalNotes(noteData.patientId);
+        showToast('Nota clínica agregada al expediente y guardada en BD', 'clinical_notes');
+      } else {
+        showToast('Error al guardar la nota', 'error', 'error');
+      }
+    } catch (error) {
+      showToast('Error de conexión con la API', 'error', 'error');
+    }
+  };
+
+  // Efecto para cargar las notas cuando cambia el paciente seleccionado
+  React.useEffect(() => {
+    if (selectedPatientId) {
+      fetchClinicalNotes(selectedPatientId);
+    }
+  }, [selectedPatientId]);
 
   const toggleReminderRule = (ruleId: string) => {
     setReminderRules((prev) =>

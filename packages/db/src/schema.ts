@@ -108,3 +108,21 @@ export const appointments = veterinariaSchema.table('appointments', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
   deletedAt: timestamp('deleted_at'),
 });
+
+export const clinicalNotes = veterinariaSchema.table('clinical_notes', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  tenantId: uuid('tenant_id').references(() => tenants.id, { onDelete: 'cascade' }).notNull(),
+  patientId: uuid('patient_id').references(() => patients.id, { onDelete: 'cascade' }).notNull(),
+  veterinarianId: uuid('veterinarian_id').references(() => veterinarians.id, { onDelete: 'restrict' }).notNull(),
+  title: text('title').notNull(),
+  type: text('type').notNull(), // 'consulta' | 'urgencia' | 'preventivo' | 'cirugia'
+  narrative: text('narrative').notNull(),
+  plan: text('plan'),
+  temp: text('temp'),
+  heartRate: text('heart_rate'),
+  respRate: text('resp_rate'),
+  weight: text('weight'),
+  tags: text('tags').array(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  deletedAt: timestamp('deleted_at'),
+});

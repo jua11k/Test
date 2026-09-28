@@ -15,6 +15,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/patients', require('./routes/patients').default);
 app.use('/api/appointments', require('./routes/appointments').default);
 app.use('/api/clients', require('./routes/clients').default);
+app.use('/api/clinical-notes', require('./routes/clinical-notes').default);
 app.use('/api/ai', require('./routes/ai').default);
 
 // Health check
