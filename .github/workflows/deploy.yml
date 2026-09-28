@@ -1,0 +1,25 @@
+name: Deploy to Easypanel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'Dockerfile'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'turbo.json'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Easypanel Webhook
+        run: |
+          if [ -n "${{ secrets.WEBHOOK_EASYPANEL }}" ]; then
+            curl -X POST "${{ secrets.WEBHOOK_EASYPANEL }}"
+          else
+            echo "El secreto WEBHOOK_EASYPANEL no está configurado."
+          fi

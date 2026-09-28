@@ -1,0 +1,7 @@
+{
+  "name": "VetCare OS - Clinical EMR & Multi-Tenant Veterinary Management",
+  "description": "Sistema integral de gestión clínica veterinaria y expediente médico electrónico (EMR) multi-sede con agendamiento, directorio de pacientes, catálogo de procedimientos y portal del tutor.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
