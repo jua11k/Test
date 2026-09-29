@@ -8,8 +8,8 @@ export default defineConfig(() => {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, '.'),
-        '@repo/ui': path.resolve(__dirname, '../../packages/ui/src')
+        '@': path.resolve(import.meta.dirname, '.'),
+        '@repo/ui': path.resolve(import.meta.dirname, '../../packages/ui/src')
       },
     },
     server: {
