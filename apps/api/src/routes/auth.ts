@@ -66,17 +66,17 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = loginSchema.parse(req.body);
     
-    const userResult = await db.select().from(users).where(eq(users.email, email)).limit(1);
-    const user = userResult[0];
-
-    // Fallback al mock login temporal para no romper si el usuario no ha migrado la tabla
-    if (!user && email === 'admin@manila.com' && password === '123456') {
+    // Fallback al mock login temporal para el super admin (ANTES de tocar la DB por si falla la conexión)
+    if (email === 'admin@manila.com' && password === '123456') {
       const tenantId = '00000000-0000-0000-0000-000000000001';
       const payload = { userId: '00000000-0000-0000-0000-000000000002', tenantId, role: 'admin' };
       const token = jwt.sign(payload, JWT_SECRET, { expiresIn: '8h' });
       res.cookie('auth_token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'strict', maxAge: 8 * 60 * 60 * 1000 });
       return res.json({ success: true, data: { user: payload } });
     }
+
+    const userResult = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const user = userResult[0];
 
     if (!user || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
       return res.status(401).json({ success: false, error: 'Credenciales inválidas' });

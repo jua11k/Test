@@ -1,9 +1,5 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useParams } from 'react-router-dom';
 import { TenantProvider, useTenant } from '@repo/ui/context/TenantContext';
 import { Header } from '@repo/ui/components/layout/Header';
 import { Sidebar } from '@repo/ui/components/layout/Sidebar';
@@ -19,9 +15,8 @@ import { SettingsView } from '@repo/ui/components/settings/SettingsView';
 import { NewAppointmentModal } from '@repo/ui/components/agenda/NewAppointmentModal';
 import { Toast } from '@repo/ui/components/common/Toast';
 import { LoginView } from '@repo/ui/components/auth/LoginView';
-import { useState } from 'react';
 
-const AppContent: React.FC = () => {
+const ClinicalApp: React.FC = () => {
   const { activeTab, userRole, isAuthenticated, isLoadingAuth, login } = useTenant();
   const [authError, setAuthError] = useState('');
 
@@ -44,7 +39,7 @@ const AppContent: React.FC = () => {
     }
   };
 
-  const isClinical = userRole === 'clinical_staff';
+  const isClinical = userRole === 'clinical_staff' || userRole === 'admin';
 
   if (isLoadingAuth) {
     return (
@@ -63,48 +58,29 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="flex min-h-screen bg-surface font-sans text-on-surface antialiased selection:bg-primary-fixed selection:text-on-primary-fixed">
-      {/* 1. Desktop Persistent Sidebar (SaaS Navigation) */}
+      {/* 1. Desktop Persistent Sidebar */}
       {isClinical && (
         <Sidebar className="hidden lg:flex fixed top-0 bottom-0 left-0 w-64 xl:w-72 z-40" />
       )}
 
       {/* 2. Main Content Wrapper */}
-      <div
-        className={`flex flex-col flex-1 min-w-0 transition-all ${
-          isClinical ? 'lg:pl-64 xl:pl-72' : ''
-        }`}
-      >
-        {/* Top Header */}
+      <div className={`flex flex-col flex-1 min-w-0 transition-all ${isClinical ? 'lg:pl-64 xl:pl-72' : ''}`}>
         {isClinical && <Header />}
 
-        {/* Viewport Area */}
         <main className={`flex-1 w-full bg-surface ${isClinical ? 'pt-16' : ''}`}>
-          {userRole === 'tutor_portal' ? (
-            activeTab === 'expediente' ? (
-              <ClinicalRecordView />
-            ) : activeTab === 'servicios' ? (
-              <CatalogView />
-            ) : (
-              <TutorPortalView />
-            )
-          ) : (
-            <>
-              {activeTab === 'inicio' && <DashboardView />}
-              {activeTab === 'pacientes' && <ClientsDirectoryView />}
-              {activeTab === 'agenda' && <AgendaView />}
-              {activeTab === 'servicios' && <CatalogView />}
-              {activeTab === 'portal' && <TutorPortalView isStaffPreview={true} />}
-              {activeTab === 'expediente' && <ClinicalRecordView />}
-              {activeTab === 'ajustes' && <SettingsView />}
-            </>
-          )}
+          {activeTab === 'inicio' && <DashboardView />}
+          {activeTab === 'pacientes' && <ClientsDirectoryView />}
+          {activeTab === 'agenda' && <AgendaView />}
+          {activeTab === 'servicios' && <CatalogView />}
+          {activeTab === 'portal' && <TutorPortalView isStaffPreview={true} />}
+          {activeTab === 'expediente' && <ClinicalRecordView />}
+          {activeTab === 'ajustes' && <SettingsView />}
         </main>
       </div>
 
-      {/* 3. Mobile Navigation Drawers and Docks */}
       <ClinicalDrawer />
 
-      {/* Bottom navigation dock on handheld devices */}
+      {/* Bottom Navigation */}
       {isClinical ? (
         <div className="lg:hidden">
           <Navigation />
@@ -113,8 +89,60 @@ const AppContent: React.FC = () => {
         <Navigation />
       )}
 
-      {/* 4. Global Modals & Notifications */}
       <NewAppointmentModal />
+      <Toast />
+    </div>
+  );
+};
+
+const PublicTutorApp: React.FC = () => {
+  const { slug } = useParams();
+  const { setUserRole } = useTenant();
+  const [tenantInfo, setTenantInfo] = useState<any>(null);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    // Configuramos al usuario como 'tutor_portal' para evitar que se carguen vistas clínicas
+    setUserRole('tutor_portal');
+    
+    // Resolvemos el slug con el backend
+    fetch(`/api/tenants/${slug}`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          setTenantInfo(result.data);
+          // Opcionalmente: setTenantId(result.data.id) para configurar el contexto global
+        } else {
+          setError(result.error || 'Clínica no encontrada');
+        }
+      })
+      .catch(() => setError('Error conectando al servidor'));
+  }, [slug]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="text-center">
+          <span className="material-symbols-outlined text-[48px] text-error mb-2">error</span>
+          <h1 className="text-xl font-bold text-on-surface">{error}</h1>
+          <p className="text-on-surface-variant mt-2">Verifica la URL proporcionada por tu clínica.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!tenantInfo) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-surface">
+        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col w-full min-h-screen bg-surface font-sans text-on-surface antialiased">
+      {/* Pasamos los datos resueltos al componente principal */}
+      <TutorPortalView isStaffPreview={false} />
       <Toast />
     </div>
   );
@@ -123,7 +151,15 @@ const AppContent: React.FC = () => {
 export default function App() {
   return (
     <TenantProvider>
-      <AppContent />
+      <BrowserRouter>
+        <Routes>
+          {/* Ruta pública del Tutor con Slug */}
+          <Route path="/p/:slug" element={<PublicTutorApp />} />
+          
+          {/* Dashboard y App Clínica interna (Cualquier otra ruta) */}
+          <Route path="/*" element={<ClinicalApp />} />
+        </Routes>
+      </BrowserRouter>
     </TenantProvider>
   );
 }

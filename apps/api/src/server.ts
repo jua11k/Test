@@ -12,6 +12,8 @@ app.use(cookieParser());
 
 // Rutas
 app.use('/api/auth', authRoutes);
+app.use('/api/tenants', require('./routes/tenants').default);
+app.use('/api/portal', require('./routes/portal').default);
 app.use('/api/patients', require('./routes/patients').default);
 app.use('/api/appointments', require('./routes/appointments').default);
 app.use('/api/clients', require('./routes/clients').default);
