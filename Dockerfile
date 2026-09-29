@@ -12,7 +12,7 @@ WORKDIR /app
 RUN npm install -g turbo
 COPY . .
 # Prune para el backend que servirá ambos
-RUN turbo prune @manila/vet-api --docker
+RUN turbo prune @manila/vet-api @manila/vet-web --docker
 
 FROM base AS installer
 RUN apk update && apk add --no-cache libc6-compat
@@ -26,8 +26,6 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Build the project
 COPY --from=builder /app/out/full/ .
-# Copiar explicitamente apps/veterinaria-web por si el prune no lo incluyó
-COPY apps/veterinaria-web ./apps/veterinaria-web
 # Dummy env if needed
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 # Construimos api y web
