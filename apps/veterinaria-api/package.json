@@ -1,5 +1,5 @@
 {
-  "name": "@repo/api",
+  "name": "@manila/vet-api",
   "version": "1.0.0",
   "main": "dist/server.js",
   "scripts": {

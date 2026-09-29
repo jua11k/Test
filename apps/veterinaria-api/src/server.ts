@@ -31,7 +31,7 @@ const PORT = process.env.PORT || 4000;
 
 // Servir la aplicación React estática (Vite SPA) en producción
 if (process.env.NODE_ENV === 'production') {
-  const distPath = path.join(__dirname, '../../web/dist');
+  const distPath = path.join(__dirname, '../../veterinaria-web/dist');
   app.use(express.static(distPath));
   app.get('*', (req, res) => {
     res.sendFile(path.join(distPath, 'index.html'));

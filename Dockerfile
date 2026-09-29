@@ -12,7 +12,7 @@ WORKDIR /app
 RUN npm install -g turbo
 COPY . .
 # Prune para el backend que servirá ambos
-RUN turbo prune @repo/api --docker
+RUN turbo prune @manila/vet-api --docker
 
 FROM base AS installer
 RUN apk update && apk add --no-cache libc6-compat
@@ -26,12 +26,12 @@ RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # Build the project
 COPY --from=builder /app/out/full/ .
-# Copiar explicitamente apps/web por si el prune no lo incluyó
-COPY apps/web ./apps/web
+# Copiar explicitamente apps/veterinaria-web por si el prune no lo incluyó
+COPY apps/veterinaria-web ./apps/veterinaria-web
 # Dummy env if needed
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
 # Construimos api y web
-RUN pnpm turbo run build --filter=@repo/api --filter=@repo/web
+RUN pnpm turbo run build --filter=@manila/vet-api --filter=@manila/vet-web
 
 FROM base AS runner
 WORKDIR /app
@@ -43,9 +43,9 @@ USER expressjs
 # Copiar build de la API y node_modules
 COPY --from=installer --chown=expressjs:nodejs /app/node_modules ./node_modules
 COPY --from=installer --chown=expressjs:nodejs /app/packages ./packages
-COPY --from=installer --chown=expressjs:nodejs /app/apps/api ./apps/api
+COPY --from=installer --chown=expressjs:nodejs /app/apps/veterinaria-api ./apps/veterinaria-api
 # Copiar build del Frontend
-COPY --from=installer --chown=expressjs:nodejs /app/apps/web/dist ./apps/web/dist
+COPY --from=installer --chown=expressjs:nodejs /app/apps/veterinaria-web/dist ./apps/veterinaria-web/dist
 
 ENV NODE_ENV=production
 ENV PORT=4000
@@ -53,4 +53,4 @@ ENV HOSTNAME="0.0.0.0"
 
 EXPOSE 4000
 
-CMD ["node", "apps/api/dist/server.js"]
+CMD ["node", "apps/veterinaria-api/dist/server.js"]
