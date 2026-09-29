@@ -1,7 +1,11 @@
 {
   "name": "@repo/db",
   "version": "1.0.0",
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
   "dependencies": {
     "drizzle-orm": "^0.30.10",
     "postgres": "^3.4.4"
@@ -11,7 +15,13 @@
     "typescript": "^5.0.0"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./schema": "./src/schema.ts"
+    ".": {
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./schema": {
+      "require": "./dist/schema.js",
+      "types": "./dist/schema.d.ts"
+    }
   }
 }
